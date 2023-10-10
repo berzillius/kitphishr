@@ -108,21 +108,26 @@ func main() {
 				requrl := resp.URL
 
 				// if we found a zip from a URL path
-				if strings.HasSuffix(requrl, ".zip") {
-
-					// make sure it's a valid zip
-					if resp.ContentLength > 0 && resp.ContentLength < MAX_DOWNLOAD_SIZE && strings.Contains(resp.ContentType, "zip") {
-
-						if verbose {
-							color.Green.Printf("Zip found from URL folder at %s\n", requrl)
-						} else {
-							fmt.Println(requrl)
-						}
-
-						// download the zip
-						if downloadKits {
-							tosave <- resp
-							continue
+				if strings.HasSuffix(requrl, ".zip") || strings.HasSuffix(requrl, ".txt") || strings.HasSuffix(requrl, ".log") || strings.HasSuffix(requrl, ".exe") {
+			 
+					// make sure it's a valid download
+				 	if resp.ContentLength > 0 && resp.ContentLength < MAX_DOWNLOAD_SIZE {
+						validContentType := strings.Contains(resp.ContentType, "zip") ||
+						strings.Contains(resp.ContentType, "plain/text") || // Add other content types as needed
+						strings.Contains(resp.ContentType, "application/octet-stream") // Add other content types as needed
+			 
+						if validContentType {
+							if verbose {
+								color.Green.Printf("File found from URL folder at %s\n", requrl)
+							} else {
+								fmt.Println(requrl)
+							}
+				
+							// download the file
+							if downloadKits {
+								tosave <- resp
+								continue
+							}
 						}
 					}
 				}
