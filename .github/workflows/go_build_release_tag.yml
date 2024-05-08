@@ -1,0 +1,96 @@
+name: Build, Download Artifacts, and Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      branchName:
+        description: 'Branch to build from'
+        required: true
+        default: 'master'
+      tagName:
+        description: 'Tag Name for the Release'
+        required: true
+
+jobs:
+  build:
+    name: Build Binaries
+    runs-on: ubuntu-latest
+    outputs:
+      linux_binary: ${{ steps.upload_linux.outputs.download-path }}
+      windows_binary: ${{ steps.upload_windows.outputs.download-path }}
+    steps:
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: '1.18'
+
+    - name: Check out code
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.inputs.branchName }}
+
+    - name: Build binary for Linux
+      run: GOOS=linux GOARCH=amd64 go build -o kitphishr-linux-amd64
+
+    - name: Build binary for Windows
+      run: GOOS=windows GOARCH=amd64 go build -o kitphishr-windows-amd64.exe
+
+    - name: Upload Linux Binary as Artifact
+      id: upload_linux
+      uses: actions/upload-artifact@v4.3.3
+      with:
+        name: kitphishr-linux-amd64
+        path: ./kitphishr-linux-amd64
+
+    - name: Upload Windows Binary as Artifact
+      id: upload_windows
+      uses: actions/upload-artifact@v4.3.3
+      with:
+        name: kitphishr-windows-amd64.exe
+        path: ./kitphishr-windows-amd64.exe
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download Linux Binary
+      uses: actions/download-artifact@v3
+      with:
+        name: kitphishr-linux-amd64
+
+    - name: Download Windows Binary
+      uses: actions/download-artifact@v3
+      with:
+        name: kitphishr-windows-amd64.exe
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.event.inputs.tagName }}
+        release_name: Release ${{ github.event.inputs.tagName }}
+        draft: false
+        prerelease: false
+
+    - name: Upload Linux Binary to Release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./kitphishr-linux-amd64
+        asset_name: kitphishr-linux-amd64
+        asset_content_type: application/octet-stream
+
+    - name: Upload Windows Binary to Release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./kitphishr-windows-amd64.exe
+        asset_name: kitphishr-windows-amd64.exe
+        asset_content_type: application/octet-stream
