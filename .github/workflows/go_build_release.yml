@@ -3,10 +3,10 @@ name: Go Build and Release
 on:
   workflow_dispatch:
     inputs:
-      branchName:
-        description: 'Branch to build from'
+      logLevel:
+        description: 'Log level'
         required: true
-        default: 'main'
+        default: 'warning'
 
 jobs:
   build:
@@ -23,8 +23,6 @@ jobs:
 
     - name: Check out code
       uses: actions/checkout@v3
-      with:
-        ref: ${{ github.event.inputs.branchName }}
 
     - name: Build binary for Linux
       run: |
