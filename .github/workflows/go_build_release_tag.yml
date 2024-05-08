@@ -53,6 +53,9 @@ jobs:
     name: Create Release
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
     steps:
     - name: Download Linux Binary
       uses: actions/download-artifact@v4.1.7
