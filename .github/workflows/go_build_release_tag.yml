@@ -66,12 +66,12 @@ jobs:
 
     - name: Create Release
       id: create_release
-      uses: actions/create-release@v1
+      uses: ncipollo/release-action@v1.14.0
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ github.event.inputs.tagName }}
-        release_name: Release ${{ github.event.inputs.tagName }}
+        tag: ${{ github.event.inputs.tagName }}
+        name: Release ${{ github.event.inputs.tagName }}
         draft: false
         prerelease: false
 
