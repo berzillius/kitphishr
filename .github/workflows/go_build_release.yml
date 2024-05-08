@@ -3,18 +3,18 @@ name: Go Build and Release
 on:
   workflow_dispatch:
     inputs:
-      logLevel:
-        description: 'Log level'
+      branchName:
+        description: 'Branch to build from'
         required: true
-        default: 'warning'
+        default: 'master'
 
 jobs:
   build:
     name: Build and Release Binaries
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # Allows to push commits and upload release assets
-      packages: write  # Allows to manage GitHub packages
+      contents: write
+      packages: write
     steps:
     - name: Set up Go
       uses: actions/setup-go@v3
@@ -23,6 +23,8 @@ jobs:
 
     - name: Check out code
       uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.inputs.branchName }}
 
     - name: Build binary for Linux
       run: |
@@ -32,24 +34,14 @@ jobs:
       run: |
         GOOS=windows GOARCH=amd64 go build -o kitphishr-windows-amd64.exe
 
-    - name: Upload Linux Release Asset
-      if: github.event_name == 'workflow_dispatch' && startsWith(github.ref, 'refs/tags/')
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload Linux Binary as Artifact
+      uses: actions/upload-artifact@v4.3.3
       with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./kitphishr-linux-amd64
-        asset_name: kitphishr-linux-amd64
-        asset_content_type: application/octet-stream
+        name: kitphishr-linux-amd64
+        path: ./kitphishr-linux-amd64
 
-    - name: Upload Windows Release Asset
-      if: github.event_name == 'workflow_dispatch' && startsWith(github.ref, 'refs/tags/')
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload Windows Binary as Artifact
+      uses: actions/upload-artifact@v4.3.3
       with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./kitphishr-windows-amd64.exe
-        asset_name: kitphishr-windows-amd64.exe
-        asset_content_type: application/octet-stream
+        name: kitphishr-windows-amd64.exe
+        path: ./kitphishr-windows-amd64.exe
